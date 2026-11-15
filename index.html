@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#07111d">
+<meta name="description" content="Ultimate Street Racer — a fast arcade racing game for desktop and mobile browsers.">
+<title>Ultimate Street Racer</title>
+<style>
+:root{color-scheme:dark;--cyan:#37e7ff;--pink:#ff477e;--panel:rgba(7,17,29,.84)}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050b13;font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;color:#fff;touch-action:none}
+#game{display:block;width:100%;height:100%;background:#07111d}
+.hud{position:fixed;inset:0;pointer-events:none;padding:clamp(12px,2.5vw,28px);display:flex;flex-direction:column;justify-content:space-between}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.brand{font-weight:1000;letter-spacing:.12em;text-transform:uppercase;font-size:clamp(13px,2vw,20px);text-shadow:0 0 18px #00cfff}.brand span{color:var(--cyan)}
+.stats{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.pill{background:var(--panel);border:1px solid #ffffff24;border-radius:12px;padding:8px 12px;min-width:76px;text-align:center;backdrop-filter:blur(10px)}.pill small{display:block;color:#9db3c8;font-size:9px;letter-spacing:.14em}.pill b{font-size:clamp(16px,2.5vw,23px);font-variant-numeric:tabular-nums}
+.bottom{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}.speedbox{background:var(--panel);border:1px solid #ffffff25;border-radius:16px;padding:10px 16px;min-width:130px;backdrop-filter:blur(10px)}.speed{font-size:clamp(30px,6vw,52px);font-weight:950;line-height:1}.speed small{font-size:11px;color:#9db3c8}.nitro{width:min(30vw,190px);margin-top:8px;height:7px;border-radius:8px;background:#ffffff24;overflow:hidden}.nitro>i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#2cecff,#6d7bff);box-shadow:0 0 12px #2cecff}
+.hint{color:#d7e8f5;font-size:11px;text-align:right;text-shadow:0 2px 5px #000;line-height:1.6}
+.overlay{position:fixed;inset:0;display:grid;place-items:center;background:linear-gradient(120deg,#030914cc,#061b2dcc);padding:20px}
+.panel{width:min(92vw,480px);background:linear-gradient(145deg,rgba(14,32,52,.97),rgba(5,12,24,.96));border:1px solid #5beaff55;border-radius:24px;padding:clamp(22px,5vw,38px);box-shadow:0 20px 80px #0009,0 0 45px #00cfff18;text-align:center}
+.eyebrow{color:var(--cyan);letter-spacing:.24em;font-size:10px;font-weight:900}.panel h1{font-size:clamp(30px,7vw,48px);line-height:.98;margin:12px 0 10px;font-weight:1000;font-style:italic;text-transform:uppercase}.panel h1 em{color:var(--cyan);font-style:normal}.panel p{color:#b8cada;line-height:1.6;font-size:13px}.primary{border:0;border-radius:12px;padding:14px 24px;background:linear-gradient(100deg,#17cce8,#537cff);color:#00111c;font-weight:1000;letter-spacing:.12em;text-transform:uppercase;font-size:14px;box-shadow:0 8px 25px #00cfff44;cursor:pointer;margin-top:12px}.primary:active{transform:scale(.98)}.choices{display:flex;justify-content:center;gap:12px;margin:18px 0}.swatch{width:30px;height:30px;border-radius:50%;border:3px solid #ffffff66;cursor:pointer}.swatch.active{outline:2px solid var(--cyan);outline-offset:4px}.controls{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;color:#91a9bf;font-size:11px;margin-top:18px}
+.mobile{position:fixed;bottom:18px;left:0;right:0;display:none;justify-content:space-between;padding:0 18px;pointer-events:none}.cluster{display:flex;gap:10px;align-items:flex-end}.touch{pointer-events:auto;width:62px;height:62px;border-radius:18px;border:1px solid #ffffff50;background:#071725bb;color:white;font-size:23px;font-weight:900;backdrop-filter:blur(8px);touch-action:none}.touch.gas{height:82px;background:#0b5666cc;border-color:#39eaff88}.touch.nitro{height:58px;background:#3a235fcc;border-color:#ff6bd988;font-size:12px}.hidden{display:none!important}
+@media(max-width:700px){.mobile{display:flex}.hint{display:none}.bottom{align-items:flex-end}.speedbox{padding:8px 12px}.pill{padding:6px 9px;min-width:58px}.pill small{font-size:8px}}
+</style>
+</head>
+<body>
+<canvas id="game" aria-label="Ultimate Street Racer game"></canvas>
+<div class="hud">
+ <div class="top"><div class="brand">ULTIMATE <span>STREET RACER</span></div><div class="stats"><div class="pill"><small>POSITION</small><b id="position">1 / 4</b></div><div class="pill"><small>LAP</small><b id="lap">1 / 3</b></div><div class="pill"><small>TIME</small><b id="time">00:00</b></div></div></div>
+ <div class="bottom"><div class="speedbox"><div class="speed"><span id="speed">0</span> <small>KM/H</small></div><div class="nitro"><i id="nitroBar"></i></div></div><div class="hint">WASD / ARROWS · STEER & ACCELERATE<br>SHIFT / SPACE · NITRO &nbsp; ESC · PAUSE</div></div>
+</div>
+<div class="mobile" id="mobileControls"><div class="cluster"><button class="touch" data-key="left">◀</button><button class="touch" data-key="right">▶</button></div><div class="cluster"><button class="touch nitro" data-key="nitro">NITRO</button><button class="touch gas" data-key="gas">▲</button></div></div>
+<div class="overlay" id="menu"><div class="panel"><div class="eyebrow">THE CITY IS YOURS</div><h1>ULTIMATE<br><em>STREET RACER</em></h1><p>Hit the throttle, dodge traffic, unleash nitro and race your way to the top.</p><div class="choices" aria-label="Choose car color"><button class="swatch active" data-color="#ff3d65" style="background:#ff3d65" aria-label="Red car"></button><button class="swatch" data-color="#21d9f3" style="background:#21d9f3" aria-label="Blue car"></button><button class="swatch" data-color="#ffc247" style="background:#ffc247" aria-label="Gold car"></button><button class="swatch" data-color="#a78bfa" style="background:#a78bfa" aria-label="Purple car"></button></div><button class="primary" id="start">START RACE</button><div class="controls"><span>⌨ Keyboard</span><span>📱 Touch controls</span><span>🏁 3 laps</span></div></div></div>
+<div class="overlay hidden" id="pause"><div class="panel"><div class="eyebrow">TAKE A BREATHER</div><h1>RACE <em>PAUSED</em></h1><p>Your race is waiting.</p><button class="primary" id="resume">RESUME</button></div></div>
+<div class="overlay hidden" id="finish"><div class="panel"><div class="eyebrow">CHECKERED FLAG</div><h1 id="finishTitle">RACE <em>COMPLETE</em></h1><p id="finishText">Great driving!</p><button class="primary" id="again">RACE AGAIN</button></div></div>
+<script>
+(()=>{'use strict';
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const $=id=>document.getElementById(id);
+let W=0,H=0,dpr=1,roadPos=0,playerX=0,speed=0,nitro=100,elapsed=0,lap=1,score=0,playing=false,paused=false,finished=false,last=0,carColor='#ff3d65',shake=0;
+const keys={left:false,right:false,gas:false,brake:false,nitro:false};
+const rivals=[{x:-.48,z:.3,color:'#ffc247',speed:.84},{x:.42,z:.58,color:'#a78bfa',speed:.9},{x:.05,z:.82,color:'#31dfae',speed:.94}];
+let best=Number(localStorage.getItem('usr-best')||0);
+function resize(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0)}
+addEventListener('resize',resize);resize();
+function key(e,down){const k=e.key.toLowerCase();if(['arrowleft','arrowright','arrowup','arrowdown',' ','shift','escape'].includes(k))e.preventDefault();if(k==='arrowleft'||k==='a')keys.left=down;if(k==='arrowright'||k==='d')keys.right=down;if(k==='arrowup'||k==='w')keys.gas=down;if(k==='arrowdown'||k==='s')keys.brake=down;if(k==='shift'||k===' ')keys.nitro=down;if(k==='escape'&&down)togglePause()}
+addEventListener('keydown',e=>key(e,true));addEventListener('keyup',e=>key(e,false));addEventListener('blur',()=>{if(playing&&!finished)togglePause(true)});
+document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;const on=e=>{e.preventDefault();keys[k]=true};const off=e=>{e.preventDefault();keys[k]=false};b.addEventListener('pointerdown',on);['pointerup','pointercancel','pointerleave'].forEach(t=>b.addEventListener(t,off))});
+document.querySelectorAll('.swatch').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.swatch').forEach(x=>x.classList.remove('active'));b.classList.add('active');carColor=b.dataset.color}));
+$('start').onclick=start;$('again').onclick=start;$('resume').onclick=()=>togglePause(false);
+function start(){playerX=0;speed=0;nitro=100;elapsed=0;lap=1;score=0;roadPos=0;shake=0;rivals.forEach((r,i)=>{r.x=[-.48,.42,.05][i];r.z=.3+i*.25});playing=true;paused=false;finished=false;$('menu').classList.add('hidden');$('pause').classList.add('hidden');$('finish').classList.add('hidden');$('mobileControls').classList.remove('hidden');last=performance.now();requestAnimationFrame(loop)}
+function togglePause(force){if(!playing||finished)return;paused=force===undefined?!paused:force;$('pause').classList.toggle('hidden',!paused);if(!paused){last=performance.now();requestAnimationFrame(loop)}}
+function finish(){playing=false;finished=true;$('mobileControls').classList.add('hidden');const place=1+rivals.filter(r=>r.z>1).length;$('finishTitle').innerHTML=place===1?'YOU <em>WIN!</em>':'RACE <em>COMPLETE</em>';$('finishText').textContent='Finish position: '+place+' of 4 · Time: '+format(elapsed)+(best?' · Best: '+format(best):'');$('finish').classList.remove('hidden')}
+function format(t){let m=Math.floor(t/60),s=Math.floor(t%60);return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')}
+function project(x,z){const horizon=H*.34,depth=Math.max(0,Math.min(1,z));const y=horizon+Math.pow(depth,1.65)*(H-horizon);const roadW= W*(.08+.78*depth);return {x:W/2+x*roadW*.5,y,w:roadW}}
+function polygon(points,fill){ctx.fillStyle=fill;ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);ctx.closePath();ctx.fill()}
+function drawCar(x,z,color,player=false){const p=project(x,z),scale=.25+z*.9,w=(player?W*.075:W*.052)*scale,h=w*1.55;const cx=p.x,cy=p.y-h*.45;
+ctx.save();ctx.translate(cx,cy);ctx.fillStyle='#0008';ctx.beginPath();ctx.ellipse(0,h*.57,w*.65,h*.18,0,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#111820';ctx.fillRect(-w*.55,-h*.05,w*1.1,h*.85);
+polygon([[-w*.5,0],[-w*.38,-h*.5],[w*.38,-h*.5],[w*.5,0],[w*.62,h*.68],[-w*.62,h*.68]],color);
+polygon([[-w*.34,-h*.35],[w*.34,-h*.35],[w*.43,-h*.03],[-w*.43,-h*.03]],'#102a3d');
+ctx.fillStyle='#bceeff';ctx.fillRect(-w*.3,-h*.31,w*.6,h*.035);
+ctx.fillStyle='#fff5d6';ctx.fillRect(-w*.48,h*.48,w*.18,h*.07);ctx.fillRect(w*.3,h*.48,w*.18,h*.07);
+ctx.fillStyle='#ff254f';ctx.fillRect(-w*.48,h*.61,w*.16,h*.08);ctx.fillRect(w*.32,h*.61,w*.16,h*.08);
+ctx.fillStyle='#090d13';ctx.fillRect(-w*.62,h*.12,w*.16,h*.3);ctx.fillRect(w*.46,h*.12,w*.16,h*.3);
+if(player){ctx.shadowColor=color;ctx.shadowBlur=18}ctx.restore()}
+function draw(){ctx.clearRect(0,0,W,H);const sky=ctx.createLinearGradient(0,0,0,H*.55);sky.addColorStop(0,'#071326');sky.addColorStop(1,'#173b55');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H*.55);
+ctx.fillStyle='#ffb45b';ctx.beginPath();ctx.arc(W*.76,H*.19,Math.min(W,H)*.055,0,Math.PI*2);ctx.fill();
+for(let i=0;i<24;i++){let x=(i*97%W),bh=H*(.08+(i*31%100)/600);ctx.fillStyle=i%2?'#10263a':'#0c1d30';ctx.fillRect(x,H*.34-bh, W*.035,bh);for(let j=0;j<4;j++){ctx.fillStyle='#39d9ff44';ctx.fillRect(x+5+j*8,H*.34-bh+10,W*.004,4)}}
+ctx.fillStyle='#1a583e';ctx.fillRect(0,H*.34,W,H*.66);
+const horizon=H*.34;polygon([[W*.43,horizon],[W*.57,horizon],[W*1.15,H],[W*-.15,H]],'#303b49');
+for(let side=0;side<2;side++){let x1=side?W*.57:W*.43,x2=side?W*1.15:W*-.15;polygon([[x1,horizon],[x1+(side?-.012:.012)*W,horizon],[x2,H],[side?W:H*0,H]],'#dce5ed')}
+for(let i=0;i<16;i++){let z=((i/16+roadPos)%1),p=project(0,z);let lineW=p.w*.012;ctx.fillStyle=i%2?'#f5f6f7':'#f5c44a';ctx.fillRect(W/2-lineW/2,p.y,lineW,Math.max(2,z*13))}
+for(let i=0;i<12;i++){let z=((i/12+roadPos*.6)%1),p=project(0,z);for(let side of [-1,1]){let x=p.x+side*p.w*.53;ctx.fillStyle='#f7f8fb';ctx.fillRect(x-2,p.y-10*z,4+z*3,10+z*20);ctx.fillStyle='#ed405d';ctx.fillRect(x-2,p.y-10*z,4+z*3,4+z*6)}}
+rivals.slice().sort((a,b)=>a.z-b.z).forEach(r=>drawCar(r.x,r.z,r.color,false));drawCar(playerX,.98,carColor,true);
+if(shake>0){ctx.fillStyle='#fff';ctx.globalAlpha=shake*.12;ctx.fillRect(0,0,W,H);ctx.globalAlpha=1}
+}
+function update(dt){if(!playing||paused)return;elapsed+=dt;const accelerating=keys.gas||(!keys.brake);if(accelerating)speed=Math.min(1,speed+dt*.42);else speed=Math.max(0,speed-dt*.8);if(keys.brake)speed=Math.max(0,speed-dt*1.5);
+const boosting=keys.nitro&&nitro>0&&speed>.25;if(boosting){speed=Math.min(1.25,speed+dt*.55);nitro=Math.max(0,nitro-dt*34)}else nitro=Math.min(100,nitro+dt*10);
+const steer=(keys.left?-1:0)+(keys.right?1:0);playerX+=steer*dt*(.85+speed*.55);playerX=Math.max(-.88,Math.min(.88,playerX));if(Math.abs(playerX)>.76){speed=Math.max(.25,speed-dt*.7);shake=Math.min(1,shake+dt*2)}else shake=Math.max(0,shake-dt*2);
+roadPos=(roadPos+dt*(.12+speed*.55))%1;
+rivals.forEach((r,i)=>{r.z+=dt*(.13+r.speed*.12-speed*.035);r.x+=Math.sin(elapsed*(.7+i*.2)+i)*dt*.045;if(r.z>1.12){r.z=.12;r.x=(Math.random()-.5)*.9;score++}if(Math.abs(r.x-playerX)<.18&&r.z>.83&&r.z<1.08){speed=Math.max(.2,speed-.32);r.z-=.12;shake=.8}});
+const progress=elapsed*(.15+speed*.15);lap=Math.min(3,1+Math.floor(progress/18));if(progress>=54)finish();
+$('speed').textContent=Math.round(speed*260);$('nitroBar').style.width=nitro+'%';$('lap').textContent=lap+' / 3';$('time').textContent=format(elapsed);$('position').textContent=(1+rivals.filter(r=>r.z>.85).length)+' / 4';
+}
+function loop(now){if(!playing||paused)return;const dt=Math.min(.04,(now-last)/1000||0);last=now;update(dt);draw();if(playing&&!paused)requestAnimationFrame(loop)}
+draw();
+})();
+</script>
+</body>
+</html>
